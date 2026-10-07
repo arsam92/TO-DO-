@@ -94,6 +94,65 @@ public class MainActivity extends android.app.Activity {
                 persian ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
     }
 
+    private String faDigits(String value) {
+        if (!persian) return value;
+        return value.replace('0', '۰').replace('1', '۱').replace('2', '۲')
+                .replace('3', '۳').replace('4', '۴').replace('5', '۵')
+                .replace('6', '۶').replace('7', '۷').replace('8', '۸')
+                .replace('9', '۹');
+    }
+
+    private String persianJalaliDate(Calendar g) {
+        int gy = g.get(Calendar.YEAR);
+        int gm = g.get(Calendar.MONTH) + 1;
+        int gd = g.get(Calendar.DAY_OF_MONTH);
+
+        int[] daysInMonth = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+        int gy2 = gy - 1600;
+        int gm2 = gm - 1;
+        int gd2 = gd - 1;
+
+        int gDayNo = 365 * gy2 + (gy2 + 3) / 4 - (gy2 + 99) / 100 + (gy2 + 399) / 400;
+        for (int i = 0; i < gm2; ++i) gDayNo += daysInMonth[i];
+        if (gm2 > 1 && ((gy % 4 == 0 && gy % 100 != 0) || (gy % 400 == 0))) gDayNo++;
+        gDayNo += gd2;
+
+        int jDayNo = gDayNo - 79;
+        int jNp = jDayNo / 12053;
+        int jDayRem = jDayNo % 12053;
+
+        int jy = 979 + 33 * jNp + 4 * (jDayRem / 1461);
+        jDayRem %= 1461;
+
+        if (jDayRem >= 366) {
+            jy += (jDayRem - 1) / 365;
+            jDayRem = (jDayRem - 1) % 365;
+        }
+
+        int jm;
+        if (jDayRem < 186) jm = 1 + jDayRem / 31;
+        else jm = 7 + (jDayRem - 186) / 30;
+
+        int jd;
+        if (jDayRem < 186) jd = 1 + jDayRem % 31;
+        else jd = 1 + (jDayRem - 186) % 30;
+
+        String month = new String[]{"فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
+                "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"}[jm - 1];
+
+        return dayFull()[g.get(Calendar.DAY_OF_WEEK) - 1] + "، " +
+                faDigits(Integer.toString(jd)) + " " + month + " " + faDigits(Integer.toString(jy));
+    }
+
+    private Calendar weekStart(Calendar selected) {
+        Calendar start = (Calendar) selected.clone();
+        int dow = start.get(Calendar.DAY_OF_WEEK);
+        int first = persian ? Calendar.SATURDAY : Calendar.MONDAY;
+        int shift = (dow - first + 7) % 7;
+        start.add(Calendar.DAY_OF_MONTH, -shift);
+        return start;
+    }
+
     private String[] dayShort() {
         return persian
                 ? new String[]{"یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"}
@@ -159,6 +218,7 @@ public class MainActivity extends android.app.Activity {
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setLayoutDirection(persian ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
+        content.setTextDirection(persian ? View.TEXT_DIRECTION_RTL : View.TEXT_DIRECTION_LTR);
         content.setPadding(dp(20), dp(12), dp(20), 0);
         scroll.addView(content, new ScrollView.LayoutParams(-1, -2));
         root.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
@@ -284,10 +344,7 @@ public class MainActivity extends android.app.Activity {
     private void buildDays() {
         dayStrip.removeAllViews();
 
-        Calendar monday = (Calendar) selectedDay.clone();
-        int dow = monday.get(Calendar.DAY_OF_WEEK);
-        int shift = (dow == Calendar.SUNDAY) ? -6 : Calendar.MONDAY - dow;
-        monday.add(Calendar.DAY_OF_MONTH, shift);
+        Calendar monday = weekStart(selectedDay);
 
         for (int i = 0; i < 7; i++) {
             Calendar c = (Calendar) monday.clone();
@@ -299,7 +356,7 @@ public class MainActivity extends android.app.Activity {
             int count = list == null ? 0 : list.size();
 
             String dayName = dayShort()[c.get(Calendar.DAY_OF_WEEK) - 1];
-            String num = new SimpleDateFormat("dd", Locale.US).format(c.getTime());
+            String num = faDigits(new SimpleDateFormat("dd", Locale.US).format(c.getTime()));
 
             LinearLayout chip = new LinearLayout(this);
             chip.setOrientation(LinearLayout.VERTICAL);
@@ -340,7 +397,7 @@ public class MainActivity extends android.app.Activity {
         ArrayList<Task> list = tasksByDay.get(k);
         if (list == null) list = new ArrayList<>();
 
-        dateTitle.setText(formatSelectedDate(selectedDay));
+        dateTitle.setText(persian ? persianJalaliDate(selectedDay) : formatSelectedDate(selectedDay));
 
         int done = 0;
         for (Task t : list) if (t.done) done++;
@@ -348,7 +405,10 @@ public class MainActivity extends android.app.Activity {
         int total = list.size();
         int percent = total == 0 ? 0 : Math.round(done * 100f / total);
 
-        progressText.setText(progressLabel(done, total));
+        progressText.setText(progressLabel(done, total).replaceAll("[0-9]", ""));
+        progressText.setText(persian
+                ? faDigits(Integer.toString(done)) + " / " + faDigits(Integer.toString(total)) + " انجام شد"
+                : done + " / " + total + " done");
         progressBar.setProgress(percent);
 
         taskContainer.removeAllViews();
@@ -485,6 +545,8 @@ public class MainActivity extends android.app.Activity {
         input.setHint(ui("What needs to get done?", "چه کاری باید انجام شود؟"));
         input.setTextSize(16);
         input.setSingleLine(true);
+        input.setTextDirection(persian ? View.TEXT_DIRECTION_RTL : View.TEXT_DIRECTION_LTR);
+        input.setGravity(persian ? Gravity.RIGHT | Gravity.CENTER_VERTICAL : Gravity.LEFT | Gravity.CENTER_VERTICAL);
         input.setInputType(InputType.TYPE_CLASS_TEXT |
                 InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         input.setBackground(strokeRounded(SURFACE, LINE, 1, 18));
@@ -493,6 +555,8 @@ public class MainActivity extends android.app.Activity {
 
         CheckBox important = new CheckBox(this);
         important.setText(ui("Mark as important", "این کار مهم است"));
+        important.setLayoutDirection(persian ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
+        important.setTextDirection(persian ? View.TEXT_DIRECTION_RTL : View.TEXT_DIRECTION_LTR);
         important.setTextSize(14);
         important.setTextColor(INK);
         important.setButtonTintList(ColorStateList.valueOf(ACCENT));
