@@ -1,6 +1,6 @@
-# TO-DO v1.2.0
+# TO-DO v1.2.1
 
-A fully localized Persian experience without changing the TO DO brand/logo.
+A fully localized Persian experience with polished task interactions, without changing the TO DO brand/logo.
 
 ### Included
 - Complete Persian interface when Persian is selected
@@ -18,4 +18,4 @@ A fully localized Persian experience without changing the TO DO brand/logo.
 
 ## Direct download
 
-**[Download the APK directly](https://github.com/arsam92/TO-DO-/releases/download/v1.2.0/TO-DO-v1.2.0.apk)**
+**[Download the APK directly](https://github.com/arsam92/TO-DO-/releases/download/v1.2.1/TO-DO-v1.2.1.apk)**
