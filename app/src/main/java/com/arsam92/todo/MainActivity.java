@@ -506,12 +506,16 @@ public class MainActivity extends android.app.Activity {
         star.setOnClickListener(v -> {
             task.important = !task.important;
             saveAll();
+
+            star.setText(task.important ? "★" : "☆");
+            star.setTextColor(task.important ? STAR : MUTED);
+
             star.animate()
                     .rotationBy(180)
                     .setDuration(220)
                     .setInterpolator(new AccelerateDecelerateInterpolator())
+                    .withEndAction(this::renderDay)
                     .start();
-            renderDay();
         });
 
         del.setOnClickListener(v -> {
