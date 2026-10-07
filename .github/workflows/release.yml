@@ -27,10 +27,10 @@ jobs:
           gradle-version: '8.7'
 
       - name: Build APK
-        run: gradle :app:assembleDebug --stacktrace
+        run: gradle :app:assembleRelease --stacktrace
 
       - name: Prepare release asset
-        run: cp app/build/outputs/apk/debug/app-debug.apk TO-DO-v1.0.0.apk
+        run: cp app/build/outputs/apk/release/app-release.apk TO-DO-v1.0.0.apk
 
       - name: Publish GitHub Release
         env:
