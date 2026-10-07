@@ -50,6 +50,7 @@ public class MainActivity extends android.app.Activity {
     private TextView dateTitle;
     private TextView progressText;
     private ProgressBar progressBar;
+    private boolean persian;
 
     static class Task {
         String title;
@@ -72,6 +73,9 @@ public class MainActivity extends android.app.Activity {
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
 
         prefs = getSharedPreferences("todo_store", MODE_PRIVATE);
+        persian = prefs.getBoolean("language_fa",
+                Locale.getDefault().getLanguage().equals("fa"));
+        applyDirection();
         loadAll();
         buildUi();
         animateEntrance();
@@ -79,6 +83,45 @@ public class MainActivity extends android.app.Activity {
 
     private int dp(float value) {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private String ui(String en, String fa) {
+        return persian ? fa : en;
+    }
+
+    private void applyDirection() {
+        getWindow().getDecorView().setLayoutDirection(
+                persian ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
+    }
+
+    private String[] dayShort() {
+        return persian
+                ? new String[]{"یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"}
+                : new String[]{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    }
+
+    private String[] dayFull() {
+        return persian
+                ? new String[]{"یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"}
+                : new String[]{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+    }
+
+    private String[] monthNames() {
+        return persian
+                ? new String[]{"ژانویه", "فوریه", "مارس", "آوریل", "مه", "ژوئن", "ژوئیه", "اوت", "سپتامبر", "اکتبر", "نوامبر", "دسامبر"}
+                : new String[]{"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+    }
+
+    private String formatSelectedDate(Calendar c) {
+        int dayIndex = c.get(Calendar.DAY_OF_WEEK) - 1;
+        String day = dayFull()[dayIndex];
+        String month = monthNames()[c.get(Calendar.MONTH)];
+        int number = c.get(Calendar.DAY_OF_MONTH);
+        return persian ? day + "، " + number + " " + month : day + ", " + month + " " + number;
+    }
+
+    private String progressLabel(int done, int total) {
+        return persian ? done + " / " + total + " انجام شد" : done + " / " + total + " done";
     }
 
     private TextView label(String text, float sp, int color, boolean bold) {
@@ -115,6 +158,7 @@ public class MainActivity extends android.app.Activity {
 
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
+        content.setLayoutDirection(persian ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
         content.setPadding(dp(20), dp(12), dp(20), 0);
         scroll.addView(content, new ScrollView.LayoutParams(-1, -2));
         root.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
@@ -134,17 +178,28 @@ public class MainActivity extends android.app.Activity {
         titleBox.setPadding(dp(10), 0, 0, 0);
 
         TextView title = label("TO DO", 25, INK, true);
-        TextView subtitle = label("Make today count", 13, MUTED, false);
+        TextView subtitle = label(ui("Make today count", "امروز رو بساز"), 13, MUTED, false);
         titleBox.addView(title, new LinearLayout.LayoutParams(-1, dp(34)));
         titleBox.addView(subtitle, new LinearLayout.LayoutParams(-1, dp(24)));
 
         header.addView(titleBox, new LinearLayout.LayoutParams(0, -2, 1));
 
+        TextView languageButton = label(persian ? "FA" : "EN", 11, INK, true);
+        languageButton.setGravity(Gravity.CENTER);
+        languageButton.setBackground(strokeRounded(SURFACE, LINE, 1, 15));
+        languageButton.setContentDescription(ui("Switch language", "تغییر زبان"));
+        languageButton.setOnClickListener(v -> {
+            persian = !persian;
+            prefs.edit().putBoolean("language_fa", persian).apply();
+            recreate();
+        });
+        header.addView(languageButton, new LinearLayout.LayoutParams(dp(42), dp(42)));
+
         TextView addTop = label("+", 28, 0xFFFFFFFF, true);
         addTop.setGravity(Gravity.CENTER);
         addTop.setBackground(rounded(INK, 18));
         addTop.setElevation(dp(4));
-        addTop.setContentDescription("Add task");
+        addTop.setContentDescription(ui("Add task", "افزودن کار"));
         addTop.setOnClickListener(v -> showAddDialog());
         header.addView(addTop, new LinearLayout.LayoutParams(dp(48), dp(48)));
 
@@ -159,7 +214,7 @@ public class MainActivity extends android.app.Activity {
         LinearLayout summaryLeft = new LinearLayout(this);
         summaryLeft.setOrientation(LinearLayout.VERTICAL);
 
-        TextView weekLabel = label("WEEK AT A GLANCE", 10, MUTED, true);
+        TextView weekLabel = label(ui("WEEK AT A GLANCE", "نمای کلی هفته"), 10, MUTED, true);
         weekLabel.setLetterSpacing(0.12f);
         dateTitle = label("", 18, INK, true);
 
@@ -173,7 +228,7 @@ public class MainActivity extends android.app.Activity {
         progressBox.setOrientation(LinearLayout.VERTICAL);
         progressBox.setGravity(Gravity.END);
 
-        progressText = label("0 / 0 done", 13, ACCENT, true);
+        progressText = label(progressLabel(0, 0), 13, ACCENT, true);
         progressText.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
 
         progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
@@ -186,7 +241,7 @@ public class MainActivity extends android.app.Activity {
         summary.addView(progressBox,
                 new FrameLayout.LayoutParams(dp(110), dp(48), Gravity.END | Gravity.CENTER_VERTICAL));
 
-        TextView daysTitle = label("YOUR WEEK", 11, MUTED, true);
+        TextView daysTitle = label(ui("YOUR WEEK", "هفته شما"), 11, MUTED, true);
         daysTitle.setLetterSpacing(0.12f);
         content.addView(daysTitle, new LinearLayout.LayoutParams(-1, dp(26)));
 
@@ -214,7 +269,7 @@ public class MainActivity extends android.app.Activity {
         TextView plus = label("+", 28, 0xFFFFFFFF, true);
         plus.setGravity(Gravity.CENTER);
         fab.addView(plus, new FrameLayout.LayoutParams(-1, -1));
-        fab.setContentDescription("Add task");
+        fab.setContentDescription(ui("Add task", "افزودن کار"));
         fab.setOnClickListener(v -> showAddDialog());
 
         FrameLayout.LayoutParams fabLp =
@@ -243,7 +298,7 @@ public class MainActivity extends android.app.Activity {
             ArrayList<Task> list = tasksByDay.get(key);
             int count = list == null ? 0 : list.size();
 
-            String dayName = new SimpleDateFormat("EEE", Locale.US).format(c.getTime());
+            String dayName = dayShort()[c.get(Calendar.DAY_OF_WEEK) - 1];
             String num = new SimpleDateFormat("dd", Locale.US).format(c.getTime());
 
             LinearLayout chip = new LinearLayout(this);
@@ -285,8 +340,7 @@ public class MainActivity extends android.app.Activity {
         ArrayList<Task> list = tasksByDay.get(k);
         if (list == null) list = new ArrayList<>();
 
-        dateTitle.setText(new SimpleDateFormat("EEEE, MMM d", Locale.US)
-                .format(selectedDay.getTime()));
+        dateTitle.setText(formatSelectedDate(selectedDay));
 
         int done = 0;
         for (Task t : list) if (t.done) done++;
@@ -294,7 +348,7 @@ public class MainActivity extends android.app.Activity {
         int total = list.size();
         int percent = total == 0 ? 0 : Math.round(done * 100f / total);
 
-        progressText.setText(done + " / " + total + " done");
+        progressText.setText(progressLabel(done, total));
         progressBar.setProgress(percent);
 
         taskContainer.removeAllViews();
@@ -306,10 +360,11 @@ public class MainActivity extends android.app.Activity {
             empty.setPadding(dp(30), dp(24), dp(30), dp(28));
             empty.setBackground(strokeRounded(SURFACE, LINE, 1, 24));
 
-            TextView e1 = label("Nothing planned yet", 18, INK, true);
+            TextView e1 = label(ui("Nothing planned yet", "هنوز کاری ثبت نشده"), 18, INK, true);
             e1.setGravity(Gravity.CENTER);
 
-            TextView e2 = label("Tap + and give this day a little structure.", 13, MUTED, false);
+            TextView e2 = label(ui("Tap + and give this day a little structure.",
+                    "روی + بزن و برای امروز برنامه بچین."), 13, MUTED, false);
             e2.setGravity(Gravity.CENTER);
 
             empty.addView(e1, new LinearLayout.LayoutParams(-1, dp(30)));
@@ -336,7 +391,7 @@ public class MainActivity extends android.app.Activity {
         CheckBox box = new CheckBox(this);
         box.setChecked(task.done);
         box.setButtonTintList(ColorStateList.valueOf(ACCENT));
-        box.setContentDescription("Complete task");
+        box.setContentDescription(ui("Complete task", "انجام کار"));
         row.addView(box, new LinearLayout.LayoutParams(dp(42), dp(48)));
 
         TextView title = label(task.title, 15, task.done ? MUTED : INK, !task.done);
@@ -351,13 +406,13 @@ public class MainActivity extends android.app.Activity {
                 task.important ? STAR : MUTED, true);
         star.setGravity(Gravity.CENTER);
         star.setContentDescription(task.important
-                ? "Important. Tap to remove priority."
-                : "Mark important");
+                ? ui("Important. Tap to remove priority.", "مهم است؛ برای برداشتن ستاره بزن.")
+                : ui("Mark important", "مهم علامت‌گذاری کن"));
         row.addView(star, new LinearLayout.LayoutParams(dp(44), dp(48)));
 
         TextView del = label("×", 24, DANGER, false);
         del.setGravity(Gravity.CENTER);
-        del.setContentDescription("Delete task");
+        del.setContentDescription(ui("Delete task", "حذف کار"));
         row.addView(del, new LinearLayout.LayoutParams(dp(38), dp(48)));
 
         LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(-1, dp(66));
@@ -427,7 +482,7 @@ public class MainActivity extends android.app.Activity {
         box.setPadding(dp(22), dp(6), dp(22), 0);
 
         EditText input = new EditText(this);
-        input.setHint("What needs to get done?");
+        input.setHint(ui("What needs to get done?", "چه کاری باید انجام شود؟"));
         input.setTextSize(16);
         input.setSingleLine(true);
         input.setInputType(InputType.TYPE_CLASS_TEXT |
@@ -437,17 +492,17 @@ public class MainActivity extends android.app.Activity {
         box.addView(input, new LinearLayout.LayoutParams(-1, dp(54)));
 
         CheckBox important = new CheckBox(this);
-        important.setText("Mark as important");
+        important.setText(ui("Mark as important", "این کار مهم است"));
         important.setTextSize(14);
         important.setTextColor(INK);
         important.setButtonTintList(ColorStateList.valueOf(ACCENT));
         box.addView(important, new LinearLayout.LayoutParams(-1, dp(52)));
 
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("New task")
+                .setTitle(ui("New task", "کار جدید"))
                 .setView(box)
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Add", null)
+                .setNegativeButton(ui("Cancel", "لغو"), null)
+                .setPositiveButton(ui("Add", "افزودن"), null)
                 .create();
 
         dialog.setOnShowListener(d -> {
@@ -455,7 +510,7 @@ public class MainActivity extends android.app.Activity {
                 String text = input.getText().toString().trim();
 
                 if (text.isEmpty()) {
-                    input.setError("Write a task first");
+                    input.setError(ui("Write a task first", "اول متن کار را بنویس"));
                     return;
                 }
 
