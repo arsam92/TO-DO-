@@ -1,17 +1,21 @@
-# TO-DO v1.1.0
+# TO-DO v1.2.0
 
-A cleaner, more inclusive TO DO experience with Persian language support.
+A fully localized Persian experience without changing the TO DO brand/logo.
 
 ### Included
-- Persian / English language switch
-- Full Persian RTL interface
-- Persian week-day labels and date text
-- Day-by-day task organization
+- Complete Persian interface when Persian is selected
+- Full RTL layout
+- Persian week-day names
+- Persian month names
+- Solar Hijri (Jalali) date display in Persian mode
+- Persian numerals
+- Persian task input, dialogs, labels and accessibility text
+- English mode remains available
 - Persistent local saving
 - Important-star priority
 - Animated completion and deletion
-- The custom TO DO logo used as the app icon
+- Original TO DO logo kept unchanged
 
 ## Direct download
 
-**[Download the APK directly](https://github.com/arsam92/TO-DO-/releases/download/v1.1.0/TO-DO-v1.1.0.apk)**
+**[Download the APK directly](https://github.com/arsam92/TO-DO-/releases/download/v1.2.0/TO-DO-v1.2.0.apk)**
