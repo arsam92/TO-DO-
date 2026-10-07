@@ -508,7 +508,9 @@ public class MainActivity extends android.app.Activity {
         try {
             JSONObject root = new JSONObject(raw);
 
-            for (String day : root.keySet()) {
+            java.util.Iterator<String> keys = root.keys();
+            while (keys.hasNext()) {
+                String day = keys.next();
                 JSONArray arr = root.optJSONArray(day);
                 if (arr == null) continue;
 
