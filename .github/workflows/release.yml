@@ -30,15 +30,15 @@ jobs:
         run: gradle :app:assembleRelease --stacktrace
 
       - name: Prepare release asset
-        run: cp app/build/outputs/apk/release/app-release.apk TO-DO-v1.0.0.apk
+        run: cp app/build/outputs/apk/release/app-release.apk TO-DO-v1.1.0.apk
 
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view v1.0.0 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload v1.0.0 TO-DO-v1.0.0.apk --clobber --repo "$GITHUB_REPOSITORY"
-            gh release edit v1.0.0 --title "TO-DO v1.0.0" --notes-file release-notes.md --repo "$GITHUB_REPOSITORY"
+          if gh release view v1.1.0 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload v1.1.0 TO-DO-v1.1.0.apk --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit v1.1.0 --title "TO-DO v1.1.0" --notes-file release-notes.md --repo "$GITHUB_REPOSITORY"
           else
-            gh release create v1.0.0 TO-DO-v1.0.0.apk --title "TO-DO v1.0.0" --notes-file release-notes.md --latest --repo "$GITHUB_REPOSITORY"
+            gh release create v1.1.0 TO-DO-v1.1.0.apk --title "TO-DO v1.1.0" --notes-file release-notes.md --latest --repo "$GITHUB_REPOSITORY"
           fi
